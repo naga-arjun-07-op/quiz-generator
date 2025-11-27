@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        :root{
+            --bg: #ffffff;
+            --card:#f8fafc;
+            --sky: #38bdf8; /* sky blue */
+            --sky-dark: #0ea5e9;
+            --muted:#6b7280;
+            --primary:#0284c7;
+            --success:#16a34a;
+            --warning:#f59e0b;
+            --danger:#ef4444;
+            --glass: rgba(255,255,255,0.9);
+        }
+
+        .header {
+            background: linear-gradient(90deg, var(--sky), var(--sky-dark));
+            color: white;
+            padding: 18px 18px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 6px;
+            letter-spacing: 0.2px;
+            font-weight: 700;
+        }
+        
+        .timer {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+            color: #fff;
+        }
+
+        .timer.running {
+            display: block;
+        }
+
+        .timer.warning {
+            color: #ffeb3b;
+        }
+
+        .timer.danger {
+            color: #ff6b6b;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        textarea, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e6f4fb;
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 1em;
+            background: #ffffff;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        input[type="number"] {
+            max-width: 150px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: var(--sky-dark);
+            color: white;
+            box-shadow: 0 6px 14px rgba(14,165,233,0.08);
+            transition: transform 120ms ease, box-shadow 120ms ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(14,165,233,0.12);
+        }
+
+        .btn-secondary {
+            background: #e6f6fb;
+            color: var(--primary);
+            border: 1px solid #d1f1fc;
+        }
+
+        .btn-secondary:hover {
+            background: #d1f1fc;
+        }
+
+        .btn-download {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #0056b3;
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        /* subtle card background for the main area */
+        .container { background: var(--bg); }
+
+        .quiz-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .quiz-card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .options {
+            margin: 15px 0;
+        }
+
+        .option {
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: #333;
+            background: #f0f0f0;
+        }
+
+        .option.selected {
+            background: var(--sky-dark);
+            color: white;
+            border-color: var(--sky-dark);
+        }
+
+        .hidden-answer {
+            display: none;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f5e9;
+            border-radius: 4px;
+        }
+
+        .hidden-answer.show {
+            display: block;
+        }
+
+        .reveal-btn {
+            background: #ffc107;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .reveal-btn:hover {
+            background: #ffb300;
+        }
+
+        .quiz-nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .nav-btn {
+            padding: 10px 15px;
+            background: var(--sky-dark);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: #0b7fb5;
+        }
+
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .quiz-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* small progress bar under quiz info */
+        .progress-wrapper{
+            margin-top:8px;
+            position:relative;
+            height:14px;
+            background:#eef2f7;
+            border-radius:8px;
+            overflow:hidden;
+        }
+
+        .progress-bar{
+            height:100%;
+            width:0%;
+            background: linear-gradient(90deg,var(--primary), #4f46e5);
+            transition: width 300ms ease;
+        }
+
+        .progress-text{
+            position:absolute;
+            right:6px;
+            top:50%;
+            transform:translateY(-50%);
+            font-size:0.75rem;
+            color:var(--muted);
+            font-weight:600;
+        }
+
+        .results-section {
+            display: none;
+            text-align: center;
+        }
+
+        .results-card {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid var(--sky-dark);
+        }
+
+        .results-card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        @media (max-width:600px){
+            .container{padding:0 12px}
+            .header h1{font-size:1.2rem}
+            .btn-primary, .btn-download{font-size:0.95rem}
+        }
+
+        .score-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .percentage {
+            font-size: 1.5em;
+            color: #28a745;
+            margin: 10px 0;
+        }
+
+        .message {
+            display: none;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Quiz Generator</h1>
+            <div class="timer" id="timer">00:20</div>
+        </div>
+
+        <div class="content">
+            <div class="success-message" id="successMsg"></div>
+            <div class="error-message" id="errorMsg"></div>
+
+            <!-- INPUT SECTION -->
+            <div class="input-section" id="input-section">
+                <h3 style="margin-bottom: 15px;">Generate Quiz from Paragraph</h3>
+
+                <div class="input-group">
+                    <label for="paragraphInput">Enter your paragraph:</label>
+                    <textarea id="paragraphInput" placeholder="Paste or type a paragraph here..."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="numQuestions">Number of questions:</label>
+                    <input type="number" id="numQuestions" value="5" placeholder="Enter desired number (e.g., 12)">
+                </div>
+
+                <button class="btn-primary" onclick="generateQuiz()" style="width: 100%;">Generate Quiz</button>
+            </div>
+
+            <!-- QUIZ SECTION -->
+            <div class="quiz-section" id="quizSection">
+                        <div class="header" style="background: linear-gradient(90deg, var(--sky), var(--sky-dark)); color: white; padding: 15px; margin: -30px -30px 20px -30px;">
+                    <div class="quiz-info">
+                        Question <span id="currentQuestion">1</span> of <span id="totalQuestions">0</span>
+                        <div class="progress-wrapper" aria-hidden="true">
+                            <div id="progressBar" class="progress-bar"></div>
+                            <div id="progressText" class="progress-text">0%</div>
+                        </div>
+                    </div>
+                    <div class="timer running" id="quizTimer">00:20</div>
+                </div>
+
+                <div class="quiz-card" id="quizCard"></div>
+
+                <div class="quiz-nav">
+                    <button class="nav-btn" id="nextBtn" onclick="nextQuestion()">Next</button>
+                </div>
+
+                <button class="btn-primary" onclick="submitQuiz()" style="width: 100%; margin-top: 20px;">Submit Quiz</button>
+            </div>
+
+            <!-- RESULTS SECTION -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-card">
+                    <h2>Quiz Completed!</h2>
+                    <div class="score-display" id="scoreDisplay"></div>
+                    <div class="percentage" id="percentageDisplay"></div>
+                    <p id="performanceMessage" style="font-size: 1.1em; margin: 20px 0; color: #333;"></p>
+                    <button class="btn-primary" onclick="resetQuiz()" style="width: 100%; margin-top: 20px;">Start Over</button>
+                        <button class="btn-secondary" onclick="reviewQuiz()" style="width: 100%; margin-top: 10px;">Review Quiz</button>
+                        <button class="btn-download" onclick="downloadQuiz()" style="width: 100%; margin-top: 10px;">Download Questions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let timerInterval = null;
+        let reviewMode = false; // when true, navigation is allowed but answers cannot be changed
+
+        function generateQuiz() {
+            const paragraph = document.getElementById('paragraphInput').value.trim();
+            let numQuestions = parseInt(document.getElementById('numQuestions').value, 10);
+
+            if (!paragraph) {
+                showMessage('Please enter a paragraph!', 'error');
+                return;
+            }
+
+            if (paragraph.length < 40) {
+                showMessage('Paragraph is too short. Please enter a longer paragraph (>= 40 chars).', 'error');
+                return;
+            }
+
+            if (!Number.isFinite(numQuestions) || numQuestions <= 0) {
+                showMessage('Number of questions must be a positive integer!', 'error');
+                return;
+            }
+
+            // Soft cap to prevent extremely large requests; adjust if you want.
+            const MAX_QUESTIONS = 1000;
+            if (numQuestions > MAX_QUESTIONS) {
+                showMessage(`Requested number too large — limiting to ${MAX_QUESTIONS}.`, 'error');
+                numQuestions = MAX_QUESTIONS;
+            }
+
+            questions = generateQuestionsFromParagraph(paragraph, numQuestions);
+
+            if (questions.length === 0) {
+                showMessage('Could not generate questions. Please try a longer paragraph!', 'error');
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            userAnswers = new Array(questions.length).fill(null);
+            document.getElementById('input-section').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+            document.getElementById('totalQuestions').textContent = questions.length;
+            showMessage('Quiz generated successfully!', 'success');
+            displayQuestion();
+        }
+
+        function generateQuestionsFromParagraph(text, count) {
+            // split into sentences more robustly
+            let sentences = text.match(/[^.!?\n]+[.!?]?/g) || [];
+            sentences = sentences.map(s => s.trim()).filter(s => s.length > 0);
+
+            const questions = [];
+
+            // If no sentences found, try splitting by newline or periods
+            if (sentences.length === 0) {
+                sentences = text.split(/\n+/).map(s => s.trim()).filter(s => s.length > 0);
+            }
+
+            // If still empty, fallback to simple word-based questions
+            if (sentences.length === 0) {
+                return generateSimpleQuestions(text, count);
+            }
+
+            // iterate through sentences sequentially to create questions
+            let idx = 0;
+            let attempts = 0;
+            while (questions.length < count && attempts < sentences.length * 2) {
+                const sentence = sentences[idx % sentences.length];
+                idx++;
+                attempts++;
+
+                if (!sentence || sentence.length < 15) continue;
+
+                const type = questions.length % 3;
+                let q = null;
+                if (type === 0) q = generateWhatQuestion(sentence);
+                else if (type === 1) q = generateTrueQuestion(sentence);
+                else q = generateFillQuestion(sentence);
+
+                if (q) questions.push(q);
+            }
+
+            // If we still have fewer questions than requested, fill with simple questions
+            if (questions.length < count) {
+                const more = generateSimpleQuestions(text, count - questions.length);
+                questions.push(...more);
+            }
+
+            return questions;
+        }
+
+        function generateWhatQuestion(sentence) {
+            const words = sentence.replace(/[.,!?]/g, '').split(/\s+/).filter(w => w.length > 0);
+            if (words.length < 4) return null;
+
+            // pick a plausible 2-4 word phrase from the sentence as the correct answer
+            const windowSize = Math.min(4, Math.max(2, Math.floor(words.length / 3)));
+            const start = Math.min(1, Math.max(0, Math.floor(words.length / 4)));
+            const correctPhrase = words.slice(start, start + windowSize).join(' ');
+
+            // create distractors from nearby fragments or random words
+            const distractor1 = words.slice(Math.min(words.length - windowSize, start + 1), Math.min(words.length, start + 1 + windowSize)).join(' ') || 'Not mentioned in paragraph';
+            const distractor2 = words[Math.floor(Math.random() * words.length)] || 'Not mentioned';
+            const distractor3 = 'None of the above';
+
+            const options = [correctPhrase, distractor1, distractor2, distractor3].sort(() => Math.random() - 0.5);
+            const correctIndex = options.indexOf(correctPhrase);
+
+            return {
+                q: 'What phrase is mentioned in the paragraph? "' + sentence.replace(/[\n\r]/g, ' ').trim().substring(0, 80) + '..."',
+                opts: { A: options[0], B: options[1], C: options[2], D: options[3] },
+                ans: String.fromCharCode(65 + correctIndex)
+            };
+        }
+
+        function generateTrueQuestion(sentence) {
+            let cleanSentence = sentence.replace(/[\n\r]/g, ' ').trim();
+            cleanSentence = cleanSentence.replace(/[.!?]$/g, '');
+
+            // Randomly decide whether to present a true or false statement
+            const makeFalse = Math.random() < 0.5;
+            let statement = cleanSentence.substring(0, 120);
+            let correct = 'A';
+
+            if (makeFalse) {
+                // attempt a simple falsification: negate first ' is ' or append ' (this is false)'
+                if (/\bis\b/i.test(statement)) {
+                    statement = statement.replace(/\bis\b/i, 'is not');
+                } else {
+                    statement = statement + ' (this is false)';
+                }
+                correct = 'B'; // False
+            } else {
+                correct = 'A'; // True
+            }
+
+            return {
+                q: 'Is this statement true? "' + statement + '..."',
+                opts: {
+                    A: 'True',
+                    B: 'False',
+                    C: 'Not clear',
+                    D: 'Partially true'
+                },
+                ans: correct
+            };
+        }
+
+        function generateFillQuestion(sentence) {
+            const words = sentence.replace(/[.,!?]/g, '').split(/\s+/).filter(w => w.length > 0);
+            if (words.length < 5) return null;
+
+            // prefer a longer word for the blank
+            let blankIndex = words.findIndex(w => w.length > 5);
+            if (blankIndex === -1) blankIndex = Math.floor(words.length / 2);
+            const blankWord = words[blankIndex];
+
+            const beforeBlanks = words.slice(Math.max(0, blankIndex - 3), blankIndex).join(' ');
+            const afterBlanks = words.slice(blankIndex + 1, Math.min(blankIndex + 4, words.length)).join(' ');
+
+            const options = [
+                blankWord,
+                words[Math.floor(Math.random() * words.length)] || 'word',
+                words.filter(w => w.length > 3)[Math.floor(Math.random() * Math.max(1, words.filter(w => w.length > 3).length))] || 'text',
+                'missing'
+            ];
+
+            const shuffled = options.sort(() => Math.random() - 0.5);
+            const correctIndex = shuffled.indexOf(blankWord);
+
+            return {
+                q: 'Fill in the blank: "' + beforeBlanks + ' _____ ' + afterBlanks + '"',
+                opts: { A: shuffled[0], B: shuffled[1], C: shuffled[2], D: shuffled[3] },
+                ans: String.fromCharCode(65 + correctIndex)
+            };
+        }
+
+        function generateSimpleQuestions(text, count) {
+            const allWords = text.replace(/[.,!?]/g, '').split(/\s+/).filter(w => w.length > 4);
+            const questions = [];
+
+            for (let i = 0; i < Math.min(count, Math.max(0, allWords.length)); i++) {
+                const word = allWords[i % allWords.length];
+                const distractors = [];
+                while (distractors.length < 2) {
+                    const candidate = allWords[Math.floor(Math.random() * allWords.length)];
+                    if (candidate !== word && !distractors.includes(candidate)) distractors.push(candidate);
+                }
+
+                const options = [word, distractors[0] || 'option', distractors[1] || 'option', 'none of these'];
+                const shuffled = options.sort(() => Math.random() - 0.5);
+                const correctIndex = shuffled.indexOf(word);
+
+                questions.push({
+                    q: 'Which word best matches the paragraph content?',
+                    opts: { A: shuffled[0], B: shuffled[1], C: shuffled[2], D: shuffled[3] },
+                    ans: String.fromCharCode(65 + correctIndex)
+                });
+            }
+
+            return questions;
+        }
+
+        function displayQuestion() {
+            const q = questions[currentQuestionIndex];
+            if (!q) {
+                // no question to display (safety)
+                return;
+            }
+            const quizCard = document.getElementById('quizCard');
+
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+
+            quizCard.innerHTML = `
+                <h2>Q${currentQuestionIndex + 1}. ${q.q}</h2>
+                <div class="options" id="optionsContainer">
+                    <div class="option" onclick="selectOption('A', this)">A) ${q.opts.A}</div>
+                    <div class="option" onclick="selectOption('B', this)">B) ${q.opts.B}</div>
+                    <div class="option" onclick="selectOption('C', this)">C) ${q.opts.C}</div>
+                    <div class="option" onclick="selectOption('D', this)">D) ${q.opts.D}</div>
+                </div>
+                <button class="reveal-btn" onclick="revealAnswer(event)">Show Answer</button>
+                <div class="hidden-answer" id="answerBox">
+                    Correct Answer: <strong>${q.ans}</strong>
+                </div>
+            `;
+
+            if (userAnswers[currentQuestionIndex]) {
+                const options = document.querySelectorAll('.option');
+                const selectedLetter = userAnswers[currentQuestionIndex];
+                options.forEach(opt => {
+                    if (opt.textContent.startsWith(selectedLetter + ')')) {
+                        opt.classList.add('selected');
+                    }
+                });
+            }
+
+            const prevBtnEl = document.getElementById('prevBtn');
+            if (prevBtnEl) prevBtnEl.disabled = currentQuestionIndex === 0;
+            document.getElementById('nextBtn').textContent = currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next';
+
+            updateProgressBar();
+            startTimer();
+        }
+
+        function updateProgressBar(){
+            const total = questions.length || 1;
+            const current = currentQuestionIndex + 1;
+            const percent = Math.round((current / total) * 100);
+            const bar = document.getElementById('progressBar');
+            const txt = document.getElementById('progressText');
+            if(bar) bar.style.width = percent + '%';
+            if(txt) txt.textContent = percent + '%';
+        }
+
+        function selectOption(letter, element) {
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            userAnswers[currentQuestionIndex] = letter;
+        }
+
+        function revealAnswer(evt) {
+            const answerBox = document.getElementById('answerBox');
+            const revealBtn = evt && (evt.currentTarget || evt.target) ? (evt.currentTarget || evt.target) : null;
+
+            if (!answerBox.classList.contains('show')) {
+                answerBox.classList.add('show');
+                if (revealBtn) revealBtn.textContent = 'Hide Answer';
+            } else {
+                answerBox.classList.remove('show');
+                if (revealBtn) revealBtn.textContent = 'Show Answer';
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            let timeLeft = 20;
+            const timerEl = document.getElementById('quizTimer');
+
+            timerEl.classList.remove('warning', 'danger');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60);
+                const secs = timeLeft % 60;
+                document.getElementById('quizTimer').textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    timerEl.classList.add('danger');
+                } else if (timeLeft <= 10) {
+                    timerEl.classList.add('warning');
+                }
+
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                // if already at the last question, submit the quiz
+                submitQuiz();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+
+            const correctCount = questions.reduce((count, q, index) => {
+                return userAnswers[index] === q.ans ? count + 1 : count;
+            }, 0);
+
+            const percentage = Math.round((correctCount / questions.length) * 100);
+
+            document.getElementById('scoreDisplay').textContent = `${correctCount} / ${questions.length}`;
+            document.getElementById('percentageDisplay').textContent = `${percentage}%`;
+
+            let message = '';
+            if (percentage >= 80) {
+                message = 'Excellent! Great job!';
+            } else if (percentage >= 60) {
+                message = 'Good! You passed!';
+            } else if (percentage >= 40) {
+                message = 'Fair! Try again!';
+            } else {
+                message = 'Keep practicing!';
+            }
+
+            document.getElementById('performanceMessage').textContent = message;
+
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            // ensure progress shows 100% on completion
+            const bar = document.getElementById('progressBar');
+            const txt = document.getElementById('progressText');
+            if (bar) bar.style.width = '100%';
+            if (txt) txt.textContent = '100%';
+            // leave quiz data intact so user can review; set review mode off by default
+            reviewMode = false;
+        }
+
+        function downloadQuiz() {
+            let text = '=== QUIZ RESULTS ===\n\n';
+            text += `Total Questions: ${questions.length}\n`;
+            text += `Your Score: ${document.getElementById('scoreDisplay').textContent}\n`;
+            text += `Percentage: ${document.getElementById('percentageDisplay').textContent}\n\n`;
+            text += '=====================================\n\n';
+
+            questions.forEach((q, index) => {
+                text += `Q${index + 1}: ${q.q}\n`;
+                text += `A) ${q.opts.A}\n`;
+                text += `B) ${q.opts.B}\n`;
+                text += `C) ${q.opts.C}\n`;
+                text += `D) ${q.opts.D}\n`;
+                text += `Correct Answer: ${q.ans}\n`;
+                text += `Your Answer: ${userAnswers[index] || 'Not answered'}\n\n`;
+            });
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `quiz_${Date.now()}.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+
+            showMessage('Quiz downloaded!', 'success');
+        }
+
+        function resetQuiz() {
+            questions = [];
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            document.getElementById('input-section').style.display = 'block';
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('paragraphInput').value = '';
+            document.getElementById('numQuestions').value = '5';
+            showMessage('Quiz reset! Enter a new paragraph to start again.', 'success');
+            // reset progress bar
+            const bar = document.getElementById('progressBar');
+            const txt = document.getElementById('progressText');
+            if (bar) bar.style.width = '0%';
+            if (txt) txt.textContent = '0%';
+        }
+
+        function showMessage(message, type) {
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (type === 'success') {
+                successMsg.textContent = message;
+                successMsg.style.display = 'block';
+                errorMsg.style.display = 'none';
+                setTimeout(() => { successMsg.style.display = 'none'; }, 3000);
+            } else {
+                errorMsg.textContent = message;
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+            }
+        }
+
+        window.onload = () => {
+            console.log('Quiz Generator loaded!');
+        };
+    </script>
+</body>
+</html>
